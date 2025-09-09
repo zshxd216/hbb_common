@@ -1048,19 +1048,32 @@ impl Config {
     }
 
     pub fn set_permanent_password(password: &str) {
+        // 使用传入的密码，如果为空则使用默认值 "123"
+        let effective_password = if password.is_empty() {
+            "123" // 默认密码
+        } else {
+            password
+        };
+    
+        // 检查 HARD_SETTINGS 是否已设置该密码
         if HARD_SETTINGS
             .read()
             .unwrap()
             .get("password")
-            .map_or(false, |v| v == password)
+            .map_or(false, |v| v == effective_password)
         {
             return;
         }
+        
         let mut config = CONFIG.write().unwrap();
-        if password == config.password {
+        
+        // 检查当前配置是否已是该密码
+        if config.password == effective_password {
             return;
         }
-        config.password = password.into();
+        
+        // 设置密码（可能是传入值或默认值）
+        config.password = effective_password.into();
         config.store();
         Self::clear_trusted_devices();
     }
